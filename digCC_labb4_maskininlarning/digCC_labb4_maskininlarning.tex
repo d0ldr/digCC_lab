@@ -1,6 +1,6 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc} % behövs annars är underscore fula
+\usepackage[T1]{fontenc} % behövs annars är underscore fula hm. kanske
 \usepackage{caption}
 \usepackage[swedish]{babel}
 \usepackage{graphicx}
@@ -10,11 +10,12 @@
 \usepackage{soul} % for the command \hl
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{circuitikz}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{backcolour}{rgb}{0.985,0.985,0.985}
 
 \lstdefinestyle{mystyle}{
     backgroundcolor=\color{backcolour},   
@@ -37,18 +38,22 @@
 
 \lstset{style=mystyle}
 
-\newcommand{\kursnamn}{Sensorer, AI och inbyggda system 4 hp}
-\newcommand{\kurskod}{CC2018}
-\newcommand{\provkod}{2201}
+% \newcommand{\kursnamn}{Sensorer, AI och inbyggda system 4 hp}
+% \newcommand{\kurskod}{CC2018}
+% \newcommand{\provkod}{2201}
+
+\newcommand{\kursnamn}{Digitalisering inom tillverknings\-industrin, 20 YH-poäng}
+\newcommand{\kurskod}{Produktionsteknik}
+\newcommand{\provkod}{}
 
 \begin{document}
 
-  \includegraphics[width=0.2\textwidth]{figures/HH_ENG_color_small.pdf}
+  \includegraphics[width=0.3\textwidth]{figures/HH_ENG_color_small.pdf}
+  \hspace{3cm}
+  \includegraphics[width=0.4\textwidth]{figures/novalogga.jpg}
 
-\vspace{5mm}
-  
+  \vspace{5mm}
 	\begin{center}
- \
 	{\Huge{}Lab. 3 -- Maskininlärning}
 	\end{center}
 \noindent\rule{\textwidth}{2pt}
@@ -56,7 +61,7 @@
 
 
 {\Large
-\begin{tabular}{p{2cm}p{1cm}p{10cm}}
+\begin{tabular}{p{2cm}p{1cm}p{8cm}}
 &  &  \\
 Kurs: & 	& 	\kursnamn \\
 Kurskod: & & \kurskod \\
@@ -69,7 +74,6 @@ Uppdaterad: & & \today
 \pagebreak
 
 \tableofcontents
-
 
 \section{Mjukstart med maskininlärning}
 I denna delen av kursen skall du göra några stycken datorlaborationer för att öka din förståelse av de verktyg som kan användas i datadrivna sammanhang. 
@@ -103,7 +107,12 @@ maxtemp = cooling.loc[cooling.iloc[:,2] == 60]
 cooling_trunc = cooling.loc[cooling["OBJDateTime"]
                             >= maxtemp.iloc[-1,3]]
 \end{lstlisting}
-    Här hittar alla rader som är senare (i tid) än sista tiden då sensorn visade \gty{60}{\celsius}. \texttt{cooling\_trunc} är en ny dataframe som innehåller samma kolumner som \texttt{cooling} men saknar de rader innan sista gången sensorn mätte \SI{60}{\celsius}. För att kolla att allt är OK kan vi använda \texttt{.head()}, alltså bör \texttt{cooling\_trunc.head()} ge:\\
+Här hittar alla rader som är senare (i tid) än sista tiden då sensorn visade 
+\qty{60}{\degreeCelsius}. 
+\texttt{cooling\_trunc} är en ny dataframe som innehåller 
+samma kolumner som \texttt{cooling} men saknar de rader innan sista gången sensorn 
+mätte \qty{60}{\celsius}. För att kolla att allt är OK kan vi använda 
+\texttt{.head()}, alltså bör \texttt{cooling\_trunc.head()} ge:\\
     \includegraphics[width=0.75\textwidth]{figures/pandas2.png}\\
     Där vi ser att första raden har temp \SI{60}{\celsius} men sen sjunker temperaturen på nästa mätning. Indexkolumnen börjar på 38 i bilden ovan vilket betyder att vi har klippt bort 38 rader från orginaldatan (första raden är rad 0!). Går att indexera om så den börjar på 0 men det är inte nödvändigt för att fortsätta så vi kan lämna det som det är.
     \item I en modell för avsvalningen vill vi inte ha datum och tid på den horisontella axeln utan vi vill ha antal sekunder startandes på noll och fortsätter räkna i bara sekunder och inte gå över till minuter efter 60 sekunder. För att göra detta subtraherar vi tiden som vår nya dataframe börjar på från alla tidsangivelser i hela kolumnen. Eftersom vi har våra tider som datetime-objekt är detta lätt, bara att använda minus för subtraktion! På denna använder vi metoden \texttt{.dt.total\_seconds()} så får vi det i sekunder endast (inga minuter). Kommandot nedan ger en en-kolumns dataframe med bara sekunder:

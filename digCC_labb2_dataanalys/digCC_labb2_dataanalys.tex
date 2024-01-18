@@ -1,17 +1,42 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
-%\usepackage{hyperref}
+\usepackage[T1]{fontenc} % behövs annars är underscore fula hm. kanske
+\usepackage{caption}
 \usepackage[swedish]{babel}
-
-\usepackage{minted}
 \usepackage{graphicx}
 \usepackage{float}
-%\usepackage{url}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage{siunitx}
+\usepackage{soul} % for the command \hl
+\usepackage{listings}
+\usepackage{xcolor}
 \usepackage{circuitikz}
 
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
 
 % \newcommand{\kursnamn}{Sensorer, AI och inbyggda system 4 hp}
 % \newcommand{\kurskod}{CC2018}
@@ -85,24 +110,20 @@ Temperatursensorn som används är den inbyggda sensorn som mäter temperaturen 
     \label{fig:ljussens}
 \end{figure}
 Exakt vilken ström som går ur er Raspberry Picos pinnar är inte helt samma mellan olika exemplar, därför behöver vi koppla upp oss mot en känd spänning för att få ett konsekvent utslag på ljussensorn. Ni kommer behöva en resistor (här \qty{180}{\ohm}), högra komponenten i fig.~\ref{fig:ljussens}, som kopplas mellan t.ex. \textbf{ADC2}, sjunde benet ovanifrån, och jord \textbf{GND}, åttonde benet ovanifrån. Därefter kopplas fotoresistorn in mellan den kända spänningen \qty{3.3}{\V} \textbf{3V3(OUT)}, femte benet ovanifrån, och \textbf{ADC2}, sjunde benet ovanifrån. När jag (Pererik) skriver ut data i Thonny med denna uppsättning med kommandot 
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
     print(machine.ADC(2).read_u16())
-\end{minted}
+\end{lstlisting}
 får jag med fingret på sensorn värdet ca 4000, vid normalt rumsljus ca 13500 och när jag lyser med telefonens lampa på den ca 50000. Med denna uppsättning blir utsignalen ganska tydlig. Kan då kalibreras till att helt mörkt (4000-ish) är 0\% belysning och med ficklampa (50000-ish) 100\% belysning. 
 
 För att kalibrera ljussensorn behöver du samla lite data på den plats där du skall mäta, det lägsta och högsta värdet från \texttt{read\_u16()}, alltså då det är som mörkast och då det är som ljusast. Lättast är att göra en lineär modell och göra om till \emph{ljusprocent}. En funktion som kan göra detta visas i listning~\ref{lst:example}. 
 
-\begin{listing}[H]
-\begin{minted}{python}
+
+\begin{lstlisting}[language=Python, caption={Kodsnutt med beskrivning av en funktion som omvandlar ADC-signal till ljusprocent. \texttt{lowValue} och \texttt{highValue} måste du bestämma själv genom att mäta med din Raspberry Pico och fotoresistor.}, label={lst:example}]
 def translateLight(value):
     lowValue = 100 # Dark room.
     highValue = 5000 # Smartphone lamp on sensor.
     return 100 * (value - lowValue) / highValue
-\end{minted}
-\caption{Kodsnutt med beskrivning av en funktion som omvandlar ADC-signal till ljusprocent. \texttt{lowValue} och \texttt{highValue} måste du bestämma själv genom att mäta med din Raspberry Pico och fotoresistor.}
-\label{lst:example}
-\end{listing}
-
+\end{lstlisting}
 
 
 %För att koppla in ljussensorn ansluter ni ena benet till en utav Picons ADC pins (pin 26-28), se bild \ref{fig:Pico} och det andra benet till ground. 
@@ -120,13 +141,13 @@ def translateLight(value):
 
 \subsection{Mjukvara}
 Precis som i föregående labb så finns bibliotek för att ansluta till wifi, det finns även ett bibliotek inkluderat för att skriva till Thingspeak. De förberedelser ni behöver göra är att fylla i filen $creds2$ med wifi namn, lösenord samt eran ''Write API Key''. Fyll sedan i de variabler som saknar namn i koden, dvs ert kanalnamn och namnet på era fält som ni angav i Thingspeak. Initiera sedan era ADC pins, detta kan göras med följande kod.
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
     sensor_light = machine.ADC(26)
-\end{minted}
+\end{lstlisting}
 Fullborda sedan koden innanför while-loopen. Gratisvarianten av Thingspeak är något begränsad och kan inte ta emot data allt för snabbt, därför sätter vi en $sleep$ på 15 sekunder. För att läsa av värdena från era pins så använd följande kod.
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
     readingTemp = sensor_temp.read_u16() 
-\end{minted}
+\end{lstlisting}
 \subsection{Eran Raspberry Pico-uppgift}
 Gör klart funktionerna translateLight och translateTemp. Temperaturen ska visa ett vanligt temperatur värde, ljussensorn skall visa ljusstyrka i procent. Ni skall också göra klart allt med mathworks så att ni kan visa upp att ni sparar data. Mycket av koden är redan klar, men vissa variabler behöver initieras.
 
@@ -152,9 +173,9 @@ I den här övningen skall vi öppna ett dataset och lära oss några funktioner
 \item I Jupyter skall ni arbeta med \verb+notebooks+, det är ungefär dokument där det är möjligt att blanda Python-programmering med vanlig, beskrivande text, himla smidigt! Skapa nu din första Jupyter Notebook genom att igen välja \verb+New+ uppe i högra hörnet och välj sedan \verb+Python 3+ under \verb+Notebook+. Nu bör det ploppa upp en ny flik som ser ut ungefär som nedan.	\\
   \includegraphics[width=\textwidth]{figures/anaconda3.png}\\
 För att skriva och köra ditt första Pythonprogram i Jupyter, skriv
-  \begin{minted}{python}
+  \begin{lstlisting}[language=Python]
     print(''Hello Void'')
-    \end{minted}
+    \end{lstlisting}
 i rutan vid den röda pilen på bilden ovan. (Pilen är dit-ritad, den har ni inte i ert fönster.) För att sedan köra detta lilla program trycker du på knapparna Skift och Retur så exekveras det som är i denna ruta (eller \verb+cell+ som det kallas på Jupyter-språk). Bör se ut som nedan:\\
   \includegraphics[width=\textwidth]{figures/anaconda4.png}
 \item När vi körde programmet fick vi upp en ny cell där vi kan skriva andra saker. Om vi vill skriva text som inte skall behandlas som ett Pythonprogram behöver vi ändra om så att cellen är av typen \verb+Markdown+, det görs i den lilla rutan som är markerad i bilden nedan.	\\
@@ -172,48 +193,48 @@ Det är lite påfyllt med Pythonkod i cellen nedanför.
 
 \subsection{Ladda in data med Pandas}
 Data som ni skall använda i den här övningen är mina stegdata för 2020, ladda ner filen\\ \verb+Steg2020_Pererik.csv+ som ligger i samma katalog på Blackboard som denna Laborationsanvisning. För att övningen nedan skall fungera måste stegdatafilen ligga i samma katalog som din Jupyter notebook, enligt ovan alltså för mig i katalogen \verb+C:\Users\perand\big_data+. Målet med denna övning är att känna lite på Pandas och att få fram en steg-rekommendation baserat på detta, alltså hur många steg  per dag som är rekommenderade. Stegmålet bör vara ett mål som kräver lite ansträngning för att uppnå, t.ex. om genomsnitt är 10000 steg per dag, kanske ett mål att arbeta mot är något över, 11000 eller 12000. 
-%Now trying \mintinline{python}{print(''Hello Void!'')} to see how that rocks!
-% \mintinline{python}{}
+%Now trying \lstinline[language=Python]{print(''Hello Void!'')} to see how that rocks!
+% \lstinline[language=Python]{}
 
 Vi har i kursen träffat olika typer av \emph{moduler} som kan laddas in i Pythonprogram som utökar funktionaliteten, hittills har vi träffat både modulen \verb+time+ och \verb+network+ till exempel. I denna del skall vi använda en modul som heter \verb+pandas+ och importerar vi denna fungerar det ungefär som Excel fast Python. För att läsa in data med \verb+pandas+ måste vi först importera \verb+pandas+-modulen. 
 \begin{enumerate}
-    \item Börja en ny cell i din Jupyter notebook och skriv \mintinline{python}{import pandas as pd} överst i den cellen. Detta skall vara utan radindrag. För att använda funktionalitet från Pandas skriver vi modulnamnet, pd, direkt följt av en punkt och direkt följt av namnet på den funktionen vi vill använda. För att läsa in tabelldata från vanligt textformat skall vi använda funktionen \mintinline{python}{pd.read_csv()} där \verb+csv+ står för \emph{comma separated values}. 
+    \item Börja en ny cell i din Jupyter notebook och skriv \lstinline[language=Python]{import pandas as pd} överst i den cellen. Detta skall vara utan radindrag. För att använda funktionalitet från Pandas skriver vi modulnamnet, pd, direkt följt av en punkt och direkt följt av namnet på den funktionen vi vill använda. För att läsa in tabelldata från vanligt textformat skall vi använda funktionen \lstinline[language=Python]{pd.read_csv()} där \verb+csv+ står för \emph{comma separated values}. 
     \item I \verb+Steg2020_Pererik.csv+ är kolumnerna i tabellen separerade med semikolon, så vi måste säga detta till Pandas, för att läsa in mina stegdata, skriv på raden under i din notebook cell:
-  \begin{minted}{python}
+  \begin{lstlisting}[language=Python]
     stegdata = pd.read_csv("Steg2020_Pererik.csv", sep = ";")
-    \end{minted}
-Här kallar vi den inlästa data (är en variabel på Pythonspråk) \verb+stegdata+. \mintinline{python}{sep = ”;”} anger att det är semikolon som separerar kolumner från varandra. Kör du denna cell laddas stegdatan in och du kan komma åt den genom att använda variabeln \verb+stegdata+. 
-\item \textbf{Titta på tabellhuvudet.} Med kommandot \mintinline{python}{stegdata.head()} efter att du laddat in stegdatan så visar Jupyter de fem första raderna av tabellen på ett välkänt och snyggt sätt. Observera att väl inladdad är \verb+stegdata+ ett Pandas-objekt (en \verb+dataframe+ för att använda Pythonspråk) så vi kan komma åt Pandas funktioner genom att använda punkt efter variabelnamnet. Kör du cellen bör du få upp ungefär som nedan:\\
+    \end{lstlisting}
+%Här kallar vi den inlästa data (är en variabel på Pythonspråk) \verb+stegdata+. \lstinline[language=Python]{sep = ”;”} anger att det är semikolon som separerar kolumner från varandra. Kör du denna cell laddas stegdatan in och du kan komma åt den genom att använda variabeln \verb+stegdata+. 
+\item \textbf{Titta på tabellhuvudet.} Med kommandot \lstinline[language=Python]{stegdata.head()} efter att du laddat in stegdatan så visar Jupyter de fem första raderna av tabellen på ett välkänt och snyggt sätt. Observera att väl inladdad är \verb+stegdata+ ett Pandas-objekt (en \verb+dataframe+ för att använda Pythonspråk) så vi kan komma åt Pandas funktioner genom att använda punkt efter variabelnamnet. Kör du cellen bör du få upp ungefär som nedan:\\
   \includegraphics[width=\textwidth]{figures/anaconda8.png}\\
 Här ser vi från vänster till höger radnummer, datum, antal steg för den dagen följt av nio kolumner som innehåller \verb+NaN+ (Not a Number) pga att mina stegdata innehåll en massa semikolon på varje rad (pga ful export från Excel).
-\item \textbf{Snabb statistik på stegdatan.} Testa kommandot \mintinline{python}{stegdata.describe()}  så får vi fram lite mer information om stegdatan. Bland annat hur många datapunkter vi har (hur många dagar som har en stegdatapunkt, skall vara 271), minsta och största värde, medelvärde etc. Om du tittar på minsta värde är detta 0, vilket känns felaktigt eftersom det är nästan omöjligt att gå noll steg.
+\item \textbf{Snabb statistik på stegdatan.} Testa kommandot \lstinline[language=Python]{stegdata.describe()}  så får vi fram lite mer information om stegdatan. Bland annat hur många datapunkter vi har (hur många dagar som har en stegdatapunkt, skall vara 271), minsta och största värde, medelvärde etc. Om du tittar på minsta värde är detta 0, vilket känns felaktigt eftersom det är nästan omöjligt att gå noll steg.
 \item \textbf{Städa upp i datan 1.} För att kunna gå vidare med någon form av dataanalys behöver data alltid städas upp lite. Vi skulle kunna t.ex. ta bort de kolumner som inte innehåller någon data, d.v.s. kolumnerna som heter \verb+Unnamed: 2 – 10+. Det finns jättemånga olika sätt att göra detta, lättast att förstå är att vi använder kommandot \verb+columns+ för att välja kolumner. Med raden nedan gör vi en ny variabel där vi sparar den nya tabellen som bara innehåller datum och steg:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 stegdata_liten = stegdata[stegdata.columns[[0, 1]]]
-\end{minted}
-(Ledsen för alla hakparenteser, men sånt är livet.) Om vi sedan testar \mintinline{python}{stegdata_liten.head()} ser vi att vår nya \verb+dataframe+ bara innehåller två kolumner, datum och antal steg för den dagen. 
+\end{lstlisting}
+(Ledsen för alla hakparenteser, men sånt är livet.) Om vi sedan testar \lstinline[language=Python]{stegdata_liten.head()} ser vi att vår nya \verb+dataframe+ bara innehåller två kolumner, datum och antal steg för den dagen. 
 \item \textbf{Städa upp i datan 2.} Som påpekades ovan är dagar med noll steg nästan omöjliga, därför behöver vi behandla dagar med noll (eller dagar med väldigt få steg) på något sätt så de inte påverkar statistiken på ett felaktigt sätt. Det finns flera sätt att angripa detta, lättast är att vi hittar de datum som har noll steg och tar bort dessa dagar ur datan. Raden nedan kommer avslöja vilka datum som har noll steg registrerade:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 stegdata_liten[stegdata_liten["Steg"]==0]
-\end{minted}
+\end{lstlisting}
 Här använder vi funktionen \verb+loc+ som lokaliserar, eller hittar, data som uppfyller vissa villkor. I det här fallet uppfyller det villkoret att Steg-kolumnen innehåller en nolla. För att ta bort dessa rader kan vi använda funktionen \verb+drop+, säga till den vilka rader (från kommandot ovan), säga att vi menar rader (\verb+axis = 0+ ger rader och \verb+axis = 1+ ger kolumner) och undvika att göra en ny kopia (\verb+inplace = True+):
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 stegdata_liten.drop([19, 58, 127, 202], axis = 0, inplace = True)
-\end{minted}
+\end{lstlisting}
 Testar vi igen kommandot ovan som ger alla noll-värden kommer det, förhoppningsvis, komma upp tomt. Kör vi \verb+drop+-kommandot igen blir det fel eftersom dessa rader saknas då i \verb+dataframe+:en. Givetvis går det bra att spara raderna som en variabel för att snygga till det (och då går det att köra kommandot igen utan fel). 
 \item \textbf{Städa upp datan 3.} Kör vi \verb+describe()+-funktionen på vårt nya, städade dataset ser vi att vi har färre värden (de fyra vi tog bort i förra steget) och att medelvärdet har stigit något. Vi ser att minsta värdet har ökat från noll till ett värde som igen är orimligt, det finns inga dagar som Pererik har tagit så få steg. För att utesluta dessa dagar med väldigt få steg (men fler än noll) återanvänder vi vårt kommando från ovan \emph{men ändrar villkoret}. Här är det lite godtycke inblandat, men en gissning är att dagar med färre än 4000 steg så har antingen batteriet i min stegmätare tagit slut eller så har något extraordinärt hänt. Vi kör kommandot:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 stegdata_liten.loc[stegdata_liten["Steg"] < 4000]    
-\end{minted}
+\end{lstlisting}
 Här dyker det upp åtta fall, där vissa är speciella. Här kan det ha varit dagar som Pererik varit sjuk eller liknande, men högst sannolikt är att batteriet har tagit slut. Testa att öka från 4000 i lite olika steg och se vad som händer. En bra gissning (har testat lite) är att ungefär färre än 4000 steg hör till extrema ovanligheter. För att ta bort dessa ur stegdatan gör vi som för borttagandet av noll, vi använder \verb+drop+ på de index som vi fick från \verb+<4000+-kommandot:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 stegdata_liten.drop([20, 69, 154, 183, 208, 214, 215, 222], 
                     axis = 0, inplace = True)
-\end{minted}
-Igen går det givetvis bra att spara dessa (dagar med färre än 4000 steg) som en variabel så att kommandot kan köras flera gånger. Tittar vi igen på stegdatan med \verb+describe()+ bör medelvärdet ha ökats något ytterligare. Om vi tittar lite noggrannare på datan så ger \verb+describe()+ nu att vi skall ha 259 steg-datapunkter, men om vi kollar på längden av hela tabellen har den 264 rader (kan kollas med kommandot \verb+shape+, som i \mintinline{python}{stegdata_liten.shape}). De fem ”datapunkter” innehåller inga värden, och kan tas bort med funktionen \verb+dropna()+, så för att fullända vår rensning av datan bör det sista vi gör innan vi kan besluta hur många steg Pererik skall ha som mål att ta per dag vara att ta bort dessa tomma datapunkter. Om vi kallar det en ny variabel (här \verb+stegdata_ren+) kan det göras med kommandot:
-\begin{minted}{python}
+\end{lstlisting}
+Igen går det givetvis bra att spara dessa (dagar med färre än 4000 steg) som en variabel så att kommandot kan köras flera gånger. Tittar vi igen på stegdatan med \verb+describe()+ bör medelvärdet ha ökats något ytterligare. Om vi tittar lite noggrannare på datan så ger \verb+describe()+ nu att vi skall ha 259 steg-datapunkter, men om vi kollar på längden av hela tabellen har den 264 rader (kan kollas med kommandot \verb+shape+, som i \lstinline[language=Python]{stegdata_liten.shape}). De fem ”datapunkter” innehåller inga värden, och kan tas bort med funktionen \verb+dropna()+, så för att fullända vår rensning av datan bör det sista vi gör innan vi kan besluta hur många steg Pererik skall ha som mål att ta per dag vara att ta bort dessa tomma datapunkter. Om vi kallar det en ny variabel (här \verb+stegdata_ren+) kan det göras med kommandot:
+\begin{lstlisting}[language=Python]
 stegdata_ren = stegdata_liten.dropna()
-\end{minted}
+\end{lstlisting}
 Om vi använder \verb+shape+ och \verb+describe()+ efter detta ser vi att vi nu har rätt antal datapunkter. Dessa tomma datapunkter bidrog inte till statistiken från \verb+describe()+, så att ta bort dessa förbättrar inte vår förståelse i nuläget. Om vi skall använda datan till någon mer avancerad analys hade dessa punkter kunnat ställa till problem.
 \item \textbf{Slutkläm på stegdata.} I redovisningen av denna uppgiften (det som skall in på din Powerpoint-presentation) skall du klippa in vad kommandot \verb+describe()+ ger efter din data-rensning från ovan samt ett lämpligt stegmål baserat på hur många steg Pererik tar i genomsnitt per dag. Skaffa gärna lite källor på lämpliga stegmål och knyt an din rekommendation till dessa.
 \end{enumerate}
@@ -232,10 +253,10 @@ Under den här övningen skall vi öva på att utforska data som finns tillgäng
     \begin{enumerate}
         \item Börja första cellen med att importera pandas enligt tidigare.
         \item Ladda in SMHI-datan, här använder vi \verb+read_csv+ och använder \verb+sep=”;”+ som tidigare, \emph{om} SMHI-datan har semikolon för att separera kolumner, kolla så det blir rätt. Kruxet med SMHI-datan är att det står en massa information innan själva datan börjar, därför behöver vi skippa dessa rader för att vi skall få in så ren data som möjligt. Kommando i stil med nedan bör fungera, beroende på väderstationen kanske du kan behöva ändra rader vi skall hoppa över, laborera med \verb+skiprows = 9+ och se om tabellen verkar vettig via kommandot \verb+head()+:
-        \begin{minted}{python}
+        \begin{lstlisting}[language=Python]
 orgdata = pd.read_csv("smhi-opendata_1_62040_20201008_081406.csv",
                       sep = ";", skiprows = 9)
-        \end{minted}
+        \end{lstlisting}
         Här måste du byta ut filnamnet mot namnet på den filen du har laddat ner. Kommandot \verb+orgdata.head()+ ger för mig ett tabellhuvud som verkar vettigt enligt bild nedan:\\
 \includegraphics[width=\textwidth]{figures/anaconda9.png}\\
     För mig varnade Jupyter att vissa kolumner innehöll olika typer av data, men jag väljer att strunta i detta eftersom jag endast är intresserad av kolumnerna \textbf{Datum} och \textbf{Lufttemperatur}.
@@ -243,14 +264,14 @@ orgdata = pd.read_csv("smhi-opendata_1_62040_20201008_081406.csv",
 \item \textbf{Grovrensa datan.} Vi skall som ovan ta bort lite kolumner som vi inte behöver, enligt ovan väljer jag att göra en kopia av datan, jag har kvar orginaldatan så jag kan återgå till den om det behövs. I skarpa \emph{Big Data}-sammanhang är detta ofta inte möjligt eftersom datamängden kan vara så pass stora, men i det här fallet är det fullt möjligt. Gör ett mindre dataset med bara de intressanta kolumnerna, \textbf{Datum}, \textbf{Tid}, och \textbf{Lufttemperatur} och kalla den \verb+tempdata+ eller liknande. Ta hjälp av instruktionerna ovan, använd funktionen \verb+columns+ och kom ihåg att första kolumnen är nummer 0. 
     \item \textbf{Börja nosa på datan.} Använd kommandona \verb+describe()+ och \verb+shape+ på din nya dataframe, \verb+tempdata+, för att få en uppfattning om datan och för att säkerställa att rätt kolumner är borttagna.  Via kommandot \verb+describe()+ får jag redan info att medeltemperaturen är ca \SI{8.7}{\celsius} för hela perioden, alla dagar de senaste 25 åren och alla tider på dygnet strax utanför Helsinborg.
     \item \textbf{Banta datan till att bara innehålla månaden juli.} Finns som för många programmeringsproblem väldigt många olika sätt att göra detta, jag har valt att först göra om våra datum som är sparade som text till datum-objekt, så Python/Pandas vet att detta är datum och inte text. Jag lägger till en kolumn i en dataframe genom att ge den ett nytt namn och sedan använder jag funktionen \verb+to_datetime()+ för att göra om från text (sträng) till datum (datetime-objekt). Följande bör fungera:
-    \begin{minted}{python}
+    \begin{lstlisting}[language=Python]
 tempdata["dateobj"] = pd.to_datetime(tempdata["Datum"])        
-    \end{minted}
+    \end{lstlisting}
     Vad som görs ovan är att på vänster sida om ”=” skapas en ny kolumn som heter \verb+dateobj+ och det som stoppas in där är från kolumnen \textbf{Datum} konverterat till riktigt datumformat med kommandot \verb+to_datetime()+.\\
     För att hitta de som innehåller juli (månad sju) kan vi konvertera våra datum-objekt till index, som vi ger till \verb+loc[]+ för att hitta rätt, detta låter kanske komplicerat men raden nedan väljer ut alla juli-mätvärden:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 tempdata.loc[pd.DatetimeIndex(tempdata["dateobj"]).month==7]
-\end{minted}        
+\end{lstlisting}        
 Här får ni göra som ni vill, lättast är att skapa en ny variabel som innehåller julidata, lägg till nytt variabelnamn och ”=” precis innan på raden ovan för detta. En vääääldigt användbar funktion för att snabbt sortera i pandas är \verb+.groupby()+ som snabbt som vinden sorterar på årtal eller liknande. Prova gärna denna, vi kommer i sista delen att använda oss av SMHI-datan för att öva lite enkel maskininlärning.
 \item \textbf{Redovisa medeltemperatur i juli.} Nu är vi ganska nära slutmålet, med \verb+describe()+ på vårt nya dataset med bara juli med får vi medletemperaturen i juli de senaste 23 åren i fallet med Helsingborg A. Du skall på din inlämning redovisa följande saker:
 \begin{enumerate}
@@ -267,55 +288,55 @@ Här får ni göra som ni vill, lättast är att skapa en ny variabel som inneh�
 I denna övningen skall vi öva på att visualisera data, använda temperaturdatan som finns i filen \verb+DHT_data_darth_semester_20200720-20200811.csv+ som finns på Blackboard. Eller om du känner dig säker kan du använda SMHI-data eller vilken data som helst!
 \begin{enumerate}
 \item I en, företrädelsevis ny, Jupyter Notebook kan du  importera direkt med kommandot:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 pd.read_csv("DHT_data_darth_semester_20200720-20200811.csv", 
             header = None)
-\end{minted}
+\end{lstlisting}
 \verb+header = None+ gör att den börjar läsa data från första raden, semesterdatan sparas utan kolumnnamn. Spara datan i en variabel med lämpligt namn, dvs variabelnamn sen likhetstecken sen raden ovan. OBS! Glöm inte att byta till rätt filnamn i kommandot ovan om du använder din egna data! Använd gärna de olika inbyggda funktionerna för att titta på datan, ex. \verb+.head()+ eller \verb+.describe()+. Det finns ganska många, utforska Pandas möjligheter!
 \item Om kolumnerna i din data heter lite \emph{oinformativa} saker vill vi döpa om kolumnerna till något användbart. För att döpa om olika saker i våra dataframes (Pandas-tabeller) använder vi kommandot \verb+rename()+. För att döpa om kolumner specificerar vi att det är \verb+columns+ och ger sedan de nya namnen enligt kommandot nedan. \verb+inplace = True+ betyder att kommandot döper om kolumnerna i vår befintliga dataframe, utan denna behöver vi göra en kopia av vår dataframe för att få nya kolumnnamn. I exemplet nedan har jag kallat min variabel \verb+semorg+, har du kallat din inladdade data något annat får du ändra till det.
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 semorg.rename(columns = {0: "STRdatetime", 1: "RelHum", 2: "Temp"}, 
               inplace = True)
-\end{minted}
+\end{lstlisting}
 Det som är innan kolon ovan är nuvarande kolumnnamn och det som är efter är de de döps om till (kan givetvis väljas fritt).
 \item \textbf{Enkel visualisering. } För att rita ut en graf, eller \emph{plotta} på svengelska, använder vi kommandot \verb+plot()+ på vår dataframe. Kommandot \verb+plot()+ kan köras själv, då gissar Pandas vad vi menar, testa!
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 semorg.plot()
-\end{minted}
+\end{lstlisting}
 Detta bör ge ungefär:\\
 \includegraphics[width=0.67\textwidth]{figures/anaconda10.png}\\
 Här har Pandas gissat att vi vill plotta den relativa luftfuktigheten och temperaturen för alla rader i vårt dataframe. Våra datum (första kolumnen) är ännu så länge i text, eller strängar som det heter på Pythonspråk, så den har Pandas struntat i att plotta.
 \item \textbf{Omvandla våra datum från text till datumtidbobjekt.} Vi skall omvandla detta på ungefär samma sätt som i övningen ovan med \\ \verb+pd.to_datetime()+-kommandot. Kommandot nedan funkar om du har kallat dina inlästa data \verb+semorg+, heter de något annat får du byta till vad du har kallat dem.
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 semorg["OBJdatetime"] = pd.to_datetime(semorg["STRdatetime"])
-\end{minted}
+\end{lstlisting}
 Kör vi detta kommando händer \emph{ingenting}, men vår dataframe får en kolumn till som nu Python hanterar som datum och tid. \textbf{Om Python skickar ut en rosa varning efter detta kommando är det sannolikt OK ändå.} För att testa kan vi göra en plot på bara temperatur med datum på horisontella axeln, då behöver vi modifiera \verb+plot()+-kommandot något:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 semorg.plot(x = "OBJdatetime", y = "Temp")
-\end{minted}
+\end{lstlisting}
 Detta förutsätter att din dataframe heter \verb+semorg+ och att kolumnerna heter \verb+OBJdatetime+ och \verb+Temp+ (som vi döpte om ovan). Resultatet bör se ut ungefär som i figuren nedan.\\
 \includegraphics[width = 0.67\textwidth]{figures/anaconda11.png}\\
 Här har Pandas lagt in datum med lämpliga intervall på den vertikala axeln, d.v.s., nu förstår Pandas att det är datum som avses.
 \item \textbf{Olika typer av plottar.} Standard är att Pandas drar streck mellan våra mätpunkter, men beroende på vad vi vill titta på är detta inte alltid så värst intressant. För att göra någon annan typ av plot, till exempel med punkter, kan vi använda parametern \verb+kind+ i vårt plot-kommando. Det finns många olika typer, testa t.ex. \verb+kind = ”scatter”+. Välj att plotta luftfuktigheten mot temperaturen så får vi se om de hänger ihop på något sätt:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 semorg.plot(x = "Temp", y = "RelHum", kind = "scatter")
-\end{minted}
+\end{lstlisting}
 \item \textbf{Snygg datarepresentation av relativ luftfuktighet och inomhustemperatur (eller vad nu du jobbar med för data).} En sak vi vill göra är kanske att plotta bägge mätvärden med datum under. En \verb+plot()+ ger dig felmeddelande om något med \texttt{non-datetime bla bla bla datetime}. För att få en snygg plot av bägge kan vi göra om våra datetime-objekt till index på varje rad, standard är index 0, 1, 2, 3 \ldots om vi inte anger explicit vad för index vi vill använda. För att ändra index på en dataframe använder vi kommandot \verb+set_index()+, här väljer vi att använda \verb+inplace = True+ för att inte behöva skapa en kopia av vårt dataset.
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 semorg.set_index("OBJdatetime", inplace = True)    
-\end{minted}
+\end{lstlisting}
 \item \textbf{Snygga till lite till \ldots} Ett ytterligare steg mot fulländning vore att få en bild med lite högre upplösning och att få rätt text på axlarna, alltså vill vi ha \textbf{Datum} på den horisontella axeln och \textbf{Relativ luftfuktighet (\%) / Temperatur (\si{\celsius})} på den vertikala axeln. Python är ett fullfjädrat programmeringsspråk så allt går att lösa! Modulen Pandas använder en annan modul för att skapa plottar, modulen \verb+Matplotlib+. För att styra lite mer kan vi använda denna för att sätta på rätt text på axlarna. Det finns oändligt mycket att skruva på, Snutten nedan är en bra början för att skruva på plottarna med \verb+matplotlib+, observera att x- och y-värden behöver kanske döpas om till något som finns som variabler i din Jupyter-Notebook.
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 import matplotlib.pyplot as plt
 # plottar en snygg figur med Matplotlib:
-plt.figure(dpi=100) # högre DPI ger högre upplösning (duh)
+plt.figure(dpi=100) # mer DPI ger snyggare bild
 plt.scatter(X, y) # X och y som punkter
 plt.plot(X, y_predict1, 'r') # X och y-s appriximering som linje
-plt.xlabel("Årtal") # text på x-axeln
-plt.ylabel("Temperatur ($^\circ$C)") # text på y-axeln
+plt.xlabel("Year") # text pa x-axeln
+plt.ylabel("Temperatur (grader C)") # text pa y-axeln
 plt.legend(["Data","Model" ])  # legend till kurvorna
-plt.show() # krävs inte i Jupyter, Python-standard
-\end{minted}
+plt.show() # kravs inte i Jupyter, Python-standard
+\end{lstlisting}
 Med rätt data ger snutten ovan följande vackra plot:\\
 \includegraphics[width = 0.75\textwidth]{figures/beautiful.png}
 \item \textbf{Till din Powerpoint-inlämning skall den finaste figuren du kan åstadkomma under den här övningens avslutande vara med!} Tänk på att en figur som representerar data skall vara lättläst och lätt att förstå.
@@ -324,12 +345,12 @@ Med rätt data ger snutten ovan följande vackra plot:\\
 På föreläsningen visade (eller kommer visa) jag lite spridd data där korrelationen var hög. I denna övning skall du hitta en egen oväntad korrelation och skapa din egen dataframe.  Vilken data du använder får du välja själv, men på din redovisning krävs det att du visar källan till din data. I mitt exempel nedan, för att visa hur man gör en dataframe, kommer jag använda data på BNP per capita och deras lycklighetsindex. Datan har jag hämtat från OECD\footnote{\url{https://stats.oecd.org/index.aspx?DataSetCode=BLI}}  och IMF\footnote{\url{https://www.imf.org/en}} , men ni behöver hitta något eget, gärna något med en osannolik koppling. För att hitta något intressant, testa att söka på ”spurious correlations” så bör ni hitta mängder med exempel, bl.a. med Nicholas Cages filmer. När du har hittat din data är det dags att skapa din dataframe.
 \begin{enumerate}
     \item \textbf{Korrelation för blandad data.} Det finns flera sätt att göra din egen dataframe, importera en Excel-fil går utmärkt, eller knacka in din data direkt i Jupyter. Nedan kodsnutt är gör en dataframe med BNP- och gladhetsdata:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 import pandas as pd
 indata = {"Land" : ["Sydafrika", "Grekland", "Ungern", "Ryssland",
                     "Lettland", "Korea", "Italien", "Slovakien",
                     "Spanien", "Chile", "Frankrike", "Storbritannien",
-                    "USA", "Tyskland", "Österrike", "Australien", 
+                    "USA", "Tyskland", "Osterrike", "Australien",
                     "Nya Zeeland", "Kanada", "Schweiz", "Danmark"], 
           "BNP"  : [5695, 18064, 12240, 9055, 13619, 27195, 
                     29867, 15992, 25865, 13341, 37675, 
@@ -339,18 +360,18 @@ indata = {"Land" : ["Sydafrika", "Grekland", "Ungern", "Ryssland",
                     6, 6.2, 6.3, 6.5, 6.5, 
                     6.8, 6.9, 7, 7.1, 7.3, 
                     7.3, 7.4, 7.5, 7.6]}        
-    \end{minted}
+    \end{lstlisting}
     I exemplet ovan har jag brutit raderna för att raderna inte skall bli så långa så vi inte kan se dem. I detta fall är indragning inte viktigt för att det skall bli rätt i Python, men jag har ställt de olika delarna under varandra för att det skall se tydligt ut.
     \item \textbf{Skapa din egen dataframe – omvandla med Pandas.} För att göra en Pandas dataframe av din dictionary, använd kommandot \verb+pd.DataFrame()+. För exemplet ovan kan en sådan se ut så här:
-    \begin{minted}{python}
+    \begin{lstlisting}[language=Python]
 gladbnp = pd.DataFrame(data = indata)        
-    \end{minted}
+    \end{lstlisting}
 Här skapas en ny dataframe \verb+gladbnp+ baserat på vår dictionary \verb+indata+ där kolumnerna hamnar i den ordning som de står i vår dictionary. Vi hade kunnat knappa in vår dictionary direkt i \verb+DataFrame()+-kommandot, men det hade blivit betydligt rörigare. 
 \item \textbf{Nosa på och visualisera datan.} Gör enligt instruktionerna ovan för att få en snygg plott och för att få lite lättåtkomplig statistik för datan. 
 \item \textbf{Korrelation och trender för vårt dataset.} För att få ut korrelationen mellan variablerna i vårt dataset använder vi  kommandot \verb+corr()+ vilket oss korrelationerna mellan kolumnerna, i fallet med Gladhet och BNP får vi korrelationerna:
-\begin{minted}{python}
+\begin{lstlisting}[language=Python]
 gladbnp.corr()    
-\end{minted}
+\end{lstlisting}
 Vilket ger en tabell med lika många kolumner och rader som variabler i ditt dataset, för \verb+gladbnp+ ovan:\\
 \includegraphics[width=0.33\textwidth]{figures/gladhet.png}\\
 Där vi ser att korrelationen är ganska hög, 0.8 ungefär.	
